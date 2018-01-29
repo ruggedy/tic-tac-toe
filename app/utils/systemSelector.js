@@ -29,7 +29,7 @@ export default (gameData, tilesData) => {
             }
         }
 
-        const minimax = minimaxValue({state: next, move: pos.move, player: PLAYER1})
+        const minimax = minimaxValue({state: next, move: pos.move, player: SYSTEM})
         return {pos, minimax}
     })
 
@@ -92,7 +92,7 @@ export default (gameData, tilesData) => {
                     ...state,
                     [pos.key]: {
                         move: pos.move,
-                        value: player
+                        value: player === SYSTEM? PLAYER1 : SYSTEM,
                     }
                 }
 

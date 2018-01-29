@@ -32,6 +32,7 @@ export default class Tiles extends PureComponent {
         const classes = type === 'x'? "fa-times" : "fa-circle-o"
         return (
             <div className="pattern">
+                {/* {type} */}
                 <i className={`fa ${classes} fa-5x`} />
             </div>
         )

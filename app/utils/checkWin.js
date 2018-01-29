@@ -14,16 +14,22 @@ export default (gameData, lastMove, pattern) => {
         return null
     }
 
-    console.log("this is path array", patArr)
+    // console.log("this is path array", patArr)
 
     const findElementIndex = pos => elem => {
         return elem[0] === pos[0] && elem[1] === pos[1]
     }
     // check rows
     for(let i=0; i<boardLength; i++){
-        const tilePos = [lastMove[0], i]
+        
+        const tilePos = [lastMove[0], i];
+        if(pattern === "o" && patArr.length === 4){
+            console.log("checking in rows", tilePos, patArr);
+        }
+        
         if(patArr.findIndex(findElementIndex(tilePos)) === -1) break;
         if(i === 2){
+            console.log("hit row win condition");
             return {
                 type: "row",
                 value: [
