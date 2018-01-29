@@ -31,9 +31,9 @@ import './index.scss'
 
 // player constants;
 
-const PLAYER1 = "PLAYER1";
-const PLAYER2 = "PLAYER2";
-const SYSTEM = "SYSTEM";
+const PLAYER1 = "x";
+const PLAYER2 = "o";
+const SYSTEM = "o";
 
 // ObservableTypes;
 const TILESOBSERVABLES = "TILESOBSERVABLES";
@@ -74,15 +74,17 @@ export default class App extends Component {
     }
 
     componentDidUpdate = (_, prevState) => {
-        const pattern = prevState.currentPlayer === PLAYER1? "x" : "o";
-        const gameWon = checkWin(this.state.gameData, this.state.lastMove, pattern)
+        const pattern = prevState.currentPlayer;
+        const gameWon = checkWin(this.state.gameData, this.state.lastMove, pattern);
+
         if(gameWon){
-            this.setState({gameWon})
+            return this.setState({gameWon})
         }
 
-        if(this.state.currentPlayer === SYSTEM) {
+        if(this.state.currentPlayer === SYSTEM && !this.state.gameWon && Object.keys(this.state.gameData).length < 9) {
             // console.log()
-            systemSelector(this.state.gameData, this.tiles)
+            const aiMove = systemSelector(this.state.gameData, this.tiles)
+            this.tilesClickedObservable.next(aiMove)
         }
     }
 
@@ -104,7 +106,7 @@ export default class App extends Component {
                         ...this.state.gameData,
                         [key]: {
                             move,
-                            value: this.state.currentPlayer === PLAYER1? "x" : "o"
+                            value: this.state.currentPlayer
                         },
                     },
                     currentPlayer:  this.state.currentPlayer === PLAYER1? SYSTEM : PLAYER1,
@@ -155,13 +157,15 @@ export default class App extends Component {
     }
 
     render(){
+        const { gameWon, currentPlayer } = this.state;
         return (
             <div className="game-canvas">
                 <div className="stars" />
                 <div className="stars2" />
                 <div className="stars3" />
                 <div className="game-info">
-                    <h2>Current Player: { this.state.currentPlayer }</h2>
+                    {gameWon? <h2>Game Won by: {`${gameWon.pattern}`} </h2> : null}
+                    <h2>Current Player: { currentPlayer }</h2>
                     <h2>timer</h2>
                 </div>
                 <table className="game-table">

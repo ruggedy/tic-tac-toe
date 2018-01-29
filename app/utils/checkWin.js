@@ -21,17 +21,16 @@ export default (gameData, lastMove, pattern) => {
     }
     // check rows
     for(let i=0; i<boardLength; i++){
-        
+
         const tilePos = [lastMove[0], i];
         if(pattern === "o" && patArr.length === 4){
-            console.log("checking in rows", tilePos, patArr);
         }
-        
+
         if(patArr.findIndex(findElementIndex(tilePos)) === -1) break;
         if(i === 2){
-            console.log("hit row win condition");
             return {
                 type: "row",
+                pattern,
                 value: [
                     [lastMove[0], 0],
                     [lastMove[0], 1],
@@ -48,6 +47,7 @@ export default (gameData, lastMove, pattern) => {
         if(i === 2){
             return {
                 type: "col",
+                pattern,
                 value: [
                     [0, lastMove[1]],
                     [1, lastMove[1]],
@@ -65,6 +65,7 @@ export default (gameData, lastMove, pattern) => {
             if(i===2){
                 return {
                     type: "diag",
+                    pattern,
                     value: [
                         [0, 0],
                         [1, 1],
@@ -83,6 +84,7 @@ export default (gameData, lastMove, pattern) => {
             if(i===2){
                 return  {
                     type: "antidiag",
+                    pattern,
                     value: [
                         [0, 2],
                         [1, 1],
