@@ -1,0 +1,98 @@
+$line-width: 5px;
+$sqr2: 1.4142135623730951;
+
+@mixin calc($property, $default, $expression) {
+    #{$property}: $default;
+    #{$property}: -webkit-calc(#{$expression});
+    #{$property}: -moz-calc(#{$expression});
+    #{$property}: calc(#{$expression});
+}
+
+.game-tile {
+    position: relative;
+    height: 200px;
+    width: 200px;
+    box-shadow: inset 0px 0px 3px 2px #d4a971;
+    transform: scale(1);
+    --delay: 0s;
+    --time: 0.25s;
+
+    &.selectable {
+        animation: blink 1s linear infinite alternate
+    }
+
+    .pattern {
+        display: flex;
+        height: 100%;
+        width: 100%;
+        justify-content: center;
+        align-items: center;
+
+        .fa {
+            animation: animPattern 1s linear;
+            &.fa-times {
+                color: #F44336;
+            }
+            &.fa-circle-o {
+                color: #1976D2;
+            }
+        }
+    }
+
+    .win-line {
+        position: absolute;
+        width: $line-width;
+        background-color: #43A047;
+        transform-origin: 0% 0%;
+        z-index: 100;
+
+        &.antidiag {
+            right: -2.5px;
+            top: -2.5px;
+            transform: rotate(45deg);
+            animation: drawLineDiagonal var(--time) linear var(--delay) both;
+        }
+
+        &.diag {
+            top: 2.5px;
+            left: -2.5px;
+            transform: rotate(-45deg);
+            animation: drawLineDiagonal var(--time) linear var(--delay) both;
+        }
+
+        &.col {
+            top: 0;
+            left: 50%;
+            animation: drawLine var(--time) linear var(--delay) both;
+            transform: translateX(-50%) rotate(0deg);
+        }
+
+        &.row {
+            top: 50%;
+            left: 0;
+            animation: drawLine var(--time) linear var(--delay) both;
+            transform: translateY(5px) rotate(270deg);
+        }
+    }
+
+    @keyframes animPattern {
+        0% { transform: scale(1) rotate(0deg); }
+        50% { transform: scale(0.8) rotate(180deg); }
+        100% { transform: scale(1) rotate(360deg); }
+    }
+
+    @keyframes drawLine {
+        0% { height: 0%}
+        100% { height: 100%;}
+    }
+
+    @keyframes drawLineDiagonal {
+        0% { height: 0%}
+        100% { @include calc(height, 100%, "100% * #{$sqr2}") ;}
+    }
+
+    @keyframes blink {
+        0%     {box-shadow: inset 0px 0px 3px 2px #d4a971; }
+        100%   {box-shadow: inset 0px 0px 3px 2px #F44336;}
+    }
+}
