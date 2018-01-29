@@ -19,8 +19,11 @@ import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 
 import { merge } from 'rxjs/observable/merge';
 import { timer } from 'rxjs/observable/timer';
+import { interval } from 'rxjs/observable/interval';
+import { never } from 'rxjs/observable/never';
 
 import { map } from 'rxjs/operators/map';
+import { switchMap } from 'rxjs/operators/switchMap';
 import { delayWhen } from 'rxjs/operators/delayWhen';
 
 import generateTiles from '../../utils/generateTiles';
@@ -38,6 +41,7 @@ const SYSTEM = "o";
 // ObservableTypes;
 const TILESOBSERVABLES = "TILESOBSERVABLES";
 const SHOWSELECTABLE = "SHOWSELECTABLE";
+const TIMEOBSERVABLE = "TIMEOBSERVABLE";
 
 export default class App extends Component {
 
@@ -61,10 +65,15 @@ export default class App extends Component {
             map(value => ({ type: SHOWSELECTABLE })),
             delayWhen(value => this.state.showSelectable? timer(1000) : timer(0)),
         )
+        this.playerTimerObservable = new BehaviorSubject(this.state.currentPlayer).pipe(
+            switchMap(player => player === SYSTEM || !player? never() : interval(1000)),
+            map(data => ({type: TIMEOBSERVABLE, data}) )
+        )
 
         this.eventsStream = merge(
             this.tilesClickedObservable,
             this.showSelectableObservable,
+            this.playerTimerObservable
         )
 
     }
@@ -78,11 +87,11 @@ export default class App extends Component {
         const gameWon = checkWin(this.state.gameData, this.state.lastMove, pattern);
 
         if(gameWon){
-            return this.setState({gameWon})
+            return this.setState({gameWon}, () => this.playerTimerObservable.next(false))
+
         }
 
         if(this.state.currentPlayer === SYSTEM && !this.state.gameWon && Object.keys(this.state.gameData).length < 9) {
-            // console.log()
             const aiMove = systemSelector(this.state.gameData, this.tiles)
             this.tilesClickedObservable.next(aiMove)
         }
@@ -106,12 +115,14 @@ export default class App extends Component {
                         ...this.state.gameData,
                         [key]: {
                             move,
-                            value: this.state.currentPlayer
+                            value: this.state.currentPlayer,
+                            timer: this.state.currentPlayer === PLAYER1? this.state.timer : null,
                         },
                     },
                     currentPlayer:  this.state.currentPlayer === PLAYER1? SYSTEM : PLAYER1,
-                    lastMove: move
-                })
+                    lastMove: move,
+                    timer: null
+                }, () => this.playerTimerObservable.next(this.state.currentPlayer))
                 break;
             case SHOWSELECTABLE:
                 this.setState({showSelectable: !this.state.showSelectable}, () => {
@@ -119,6 +130,9 @@ export default class App extends Component {
                         this.showSelectableObservable.next()
                     }
                 })
+                break;
+            case TIMEOBSERVABLE:
+                this.setState({timer: data})
                 break;
             default:
                 break;
@@ -156,23 +170,56 @@ export default class App extends Component {
             tileClicked={() => this.tilesClickedObservable.next({key, move})} />
     }
 
+    getStats = type => {
+        switch(type){
+            case "playermoves": 
+                return Object.keys(this.state.gameData)
+                    .filter(key => this.state.gameData[key].value === PLAYER1)
+                    .length
+            
+            case "systemmoves":
+                return Object.keys(this.state.gameData)
+                    .filter(key => this.state.gameData[key].value === SYSTEM)
+                    .length
+
+            case "playeraverage":
+                const playerArray = Object.keys(this.state.gameData)
+                    .filter(key => this.state.gameData[key].value === PLAYER1)
+                    .map(key => this.state.gameData[key])
+                
+                console.log(playerArray)
+                
+                return playerArray.reduce((acc, next) => acc+next.timer, 0)/playerArray.length
+                    
+        }    
+    }
+
     render(){
-        const { gameWon, currentPlayer } = this.state;
+        const { gameWon, currentPlayer, timer, gameData } = this.state;
         return (
             <div className="game-canvas">
                 <div className="stars" />
                 <div className="stars2" />
                 <div className="stars3" />
                 <div className="game-info">
-                    {gameWon? <h2>Game Won by: {`${gameWon.pattern}`} </h2> : null}
+                    
                     <h2>Current Player: { currentPlayer }</h2>
-                    <h2>timer</h2>
+                    {gameWon? <h2>Game Won by: {`${gameWon.pattern}`} </h2> : null}
+                    {Object.keys(gameData).length === 9 && !gameWon? <h2>Draw</h2> : null}
+                    <h2>{timer? `${timer}s` : null}</h2>
                 </div>
                 <table className="game-table">
                     <tbody>
                         {this.tiles.map(this.renderRow)}
                     </tbody>
                 </table>
+                
+                <div className="current-game-stats">
+                    <h2>Current Stats</h2>
+                    <p>System Moves: {this.getStats("systemmoves") || 0}</p>
+                    <p>Player Moves: {this.getStats("playermoves") || 0}</p>
+                    <p>Player Average Time: {this.getStats("playeraverage") || 0}</p>
+                </div>
             </div>
         )
     }
